@@ -28,9 +28,7 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
 
   // Get top products
   const topProducts = await Order.aggregate([
-    // Unwind the items array to create a document for each item
     { $unwind: '$items' },
-    // Group by product and calculate total quantity and revenue
     {
       $group: {
         _id: '$items.product',
@@ -38,11 +36,8 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
         totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
       },
     },
-    // Sort by total quantity in descending order
     { $sort: { totalQuantity: -1 } },
-    // Limit to top 5 products
     { $limit: 5 },
-    // Lookup product details
     {
       $lookup: {
         from: 'products',
@@ -51,9 +46,7 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
         as: 'product',
       },
     },
-    // Unwind the product array
     { $unwind: '$product' },
-    // Project the final fields
     {
       $project: {
         _id: 1,
@@ -79,21 +72,18 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
 // @route   GET /api/admin/analytics/top-products
 // @access  Admin
 exports.getTopProducts = asyncHandler(async (req, res) => {
-  const { period = '30' } = req.query; // Default to last 30 days
+  const { period = '30' } = req.query;
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - parseInt(period));
 
   const topProducts = await Order.aggregate([
-    // Match orders within the specified period
     {
       $match: {
         createdAt: { $gte: startDate },
         status: { $ne: 'cancelled' },
       },
     },
-    // Unwind the items array
     { $unwind: '$items' },
-    // Group by product
     {
       $group: {
         _id: '$items.product',
@@ -102,17 +92,13 @@ exports.getTopProducts = asyncHandler(async (req, res) => {
         orders: { $addToSet: '$_id' },
       },
     },
-    // Add orders count
     {
       $addFields: {
         ordersCount: { $size: '$orders' },
       },
     },
-    // Sort by total quantity
     { $sort: { totalQuantity: -1 } },
-    // Limit to top 10
     { $limit: 10 },
-    // Lookup product details
     {
       $lookup: {
         from: 'products',
@@ -121,9 +107,7 @@ exports.getTopProducts = asyncHandler(async (req, res) => {
         as: 'product',
       },
     },
-    // Unwind the product array
     { $unwind: '$product' },
-    // Project final fields
     {
       $project: {
         _id: 1,
