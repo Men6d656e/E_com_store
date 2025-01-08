@@ -1,0 +1,13 @@
+{
+  "name": "e-commerce-docs-typescript",
+  "version": "1.0.0",
+  "description": "Documentation for TypeScript version of the e-commerce store",
+  "main": "index.js",
+  "scripts": {
+    "dev": "docsify serve .",
+    "start": "docsify serve ."
+  },
+  "dependencies": {
+    "docsify-cli": "^4.4.4"
+  }
+}
