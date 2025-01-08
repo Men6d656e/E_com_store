@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -9,7 +9,7 @@ const generateToken = (id) => {
 };
 
 // Register user
-export const register = async (req, res) => {
+const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -44,7 +44,7 @@ export const register = async (req, res) => {
 };
 
 // Login user
-export const login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -78,11 +78,17 @@ export const login = async (req, res) => {
 };
 
 // Get current user profile
-export const getProfile = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
     res.json(user);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
+};
+
+module.exports = {
+  register,
+  login,
+  getProfile
 };

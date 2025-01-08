@@ -1,16 +1,14 @@
 // Import required packages
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 // Import routes (we'll create these next)
-import authRoutes from './routes/auth.js';
-import productRoutes from './routes/products.js';
-import orderRoutes from './routes/orders.js';
-import adminRoutes from './routes/admin.js';
+const authRoutes = require('./routes/auth.js');
+const productRoutes = require('./routes/products.js');
+const orderRoutes = require('./routes/orders.js');
+const adminRoutes = require('./routes/admin.js');
 
 // Initialize express app
 const app = express();

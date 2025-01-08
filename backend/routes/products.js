@@ -1,17 +1,17 @@
-import express from 'express';
-import {
+const express = require('express');
+const {
   createProduct,
   getProducts,
   getProductById,
   updateProduct,
   deleteProduct
-} from '../controllers/productController.js';
-import { protect, restrictTo } from '../middleware/auth.js';
-import { 
+} = require('../controllers/productController');
+const { protect, restrictTo } = require('../middleware/auth');
+const { 
   productValidation, 
   paginationValidation, 
   objectIdValidation 
-} from '../middleware/validator.js';
+} = require('../middleware/validator');
 
 const router = express.Router();
 
@@ -40,4 +40,4 @@ router.post('/', productValidation, createProduct);
 router.put('/:id', [...objectIdValidation, ...productValidation], updateProduct);
 router.delete('/:id', objectIdValidation, deleteProduct);
 
-export default router;
+module.exports = router;

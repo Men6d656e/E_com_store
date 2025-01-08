@@ -1,4 +1,4 @@
-import Product from '../models/Product.js';
+const Product = require('../models/Product');
 
 /**
  * @desc    Create a new product
@@ -13,7 +13,7 @@ import Product from '../models/Product.js';
  *   imageUrl: string
  * }
  */
-export const createProduct = async (req, res) => {
+const createProduct = async (req, res) => {
   try {
     // Extract product details from request body
     const { name, description, price, category, stock, imageUrl } = req.body;
@@ -56,7 +56,7 @@ export const createProduct = async (req, res) => {
  *   limit: number
  * }
  */
-export const getProducts = async (req, res) => {
+const getProducts = async (req, res) => {
   try {
     const {
       keyword = '',
@@ -130,7 +130,7 @@ export const getProducts = async (req, res) => {
  * @access  Public
  * @params  id: Product ID
  */
-export const getProductById = async (req, res) => {
+const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     
@@ -160,7 +160,7 @@ export const getProductById = async (req, res) => {
  * @params  id: Product ID
  * @body    Updated product fields
  */
-export const updateProduct = async (req, res) => {
+const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
@@ -193,7 +193,7 @@ export const updateProduct = async (req, res) => {
  * @access  Private/Admin
  * @params  id: Product ID
  */
-export const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
@@ -216,4 +216,12 @@ export const deleteProduct = async (req, res) => {
       message: error.message
     });
   }
+};
+
+module.exports = {
+  createProduct,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct
 };
