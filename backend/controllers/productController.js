@@ -1,4 +1,4 @@
-const Product = require('../models/Product');
+import Product from '../models/Product';
 
 /**
  * @desc    Create a new product
