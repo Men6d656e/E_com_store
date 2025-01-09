@@ -1,17 +1,7 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 
-/**
- * @desc    Create a new order
- * @route   POST /api/orders
- * @access  Private
- * @body    {
- *   orderItems: Array of {productId, quantity},
- *   shippingAddress: {street, city, state, postalCode, country},
- *   paymentMethod: string
- * }
- */
-export const createOrder = async (req, res) => {
+export async function createOrder(req, res) {
   try {
     const { orderItems, shippingAddress, paymentMethod } = req.body;
 
@@ -90,15 +80,9 @@ export const createOrder = async (req, res) => {
       message: error.message
     });
   }
-};
+}
 
-/**
- * @desc    Get order by ID
- * @route   GET /api/orders/:id
- * @access  Private
- * @params  id: Order ID
- */
-export const getOrderById = async (req, res) => {
+export async function getOrderById(req, res) {
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email')
@@ -130,14 +114,9 @@ export const getOrderById = async (req, res) => {
       message: error.message
     });
   }
-};
+}
 
-/**
- * @desc    Get logged in user's orders
- * @route   GET /api/orders/myorders
- * @access  Private
- */
-export const getMyOrders = async (req, res) => {
+export async function getMyOrders(req, res) {
   try {
     const orders = await Order.find({ user: req.user._id })
       .sort('-createdAt');
@@ -152,19 +131,9 @@ export const getMyOrders = async (req, res) => {
       message: error.message
     });
   }
-};
+}
 
-/**
- * @desc    Get all orders (admin only)
- * @route   GET /api/orders
- * @access  Private/Admin
- * @query   {
- *   page: number,
- *   limit: number,
- *   status: string
- * }
- */
-export const getAllOrders = async (req, res) => {
+export async function getAllOrders(req, res) {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
@@ -197,18 +166,9 @@ export const getAllOrders = async (req, res) => {
       message: error.message
     });
   }
-};
+}
 
-/**
- * @desc    Update order status
- * @route   PUT /api/orders/:id/status
- * @access  Private/Admin
- * @params  id: Order ID
- * @body    {
- *   status: string (pending, processing, shipped, delivered, cancelled)
- * }
- */
-export const updateOrderStatus = async (req, res) => {
+export async function updateOrderStatus(req, res) {
   try {
     const order = await Order.findById(req.params.id);
 
@@ -239,4 +199,58 @@ export const updateOrderStatus = async (req, res) => {
       message: error.message
     });
   }
-};
+}
+
+export async function deleteOrder(req, res) {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Check if the order belongs to the user or if the user is an admin
+    if (order.user.toString() !== req.user._id.toString() && 
+        req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this order'
+      });
+    }
+
+    // If the order is already processed or shipped, prevent deletion
+    if (order.orderStatus !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete order that is not in pending status'
+      });
+    }
+
+    // Revert stock quantities for the products in the order
+    await Promise.all(
+      order.orderItems.map(async (item) => {
+        const product = await Product.findById(item.product);
+        if (product) {
+          product.stock += item.quantity;
+          await product.save();
+        }
+      })
+    );
+
+    // Delete the order
+    await Order.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Order deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}

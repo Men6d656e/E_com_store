@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -19,16 +19,16 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Product category is required']
   },
-  stock: {
+  stockQuantity: {
     type: Number,
     required: [true, 'Product stock is required'],
     min: 0,
     default: 0
   },
-  imageUrl: {
+  images: [{
     type: String,
     required: [true, 'Product image URL is required']
-  },
+  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -45,5 +45,4 @@ productSchema.pre('save', function(next) {
   next();
 });
 
-const Product = mongoose.model('Product', productSchema);
-module.exports = Product;
+export default mongoose.model('Product', productSchema);

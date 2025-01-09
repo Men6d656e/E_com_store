@@ -165,3 +165,93 @@ export const objectIdValidation = [
   
   validateRequest
 ];
+
+/**
+ * Validation rules for cart operations
+ */
+export const cartValidation = [
+  body('productId')
+    .notEmpty().withMessage('Product ID is required')
+    .isMongoId().withMessage('Invalid product ID'),
+  
+  body('quantity')
+    .optional()
+    .isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+  
+  validateRequest
+];
+
+/**
+ * Validation rules for checkout operations
+ */
+export const checkoutValidation = [
+  body('cartItems')
+    .isArray({ min: 1 }).withMessage('Cart must contain at least one item'),
+  
+  body('cartItems.*.productId')
+    .notEmpty().withMessage('Product ID is required')
+    .isMongoId().withMessage('Invalid product ID'),
+  
+  body('cartItems.*.quantity')
+    .notEmpty().withMessage('Quantity is required')
+    .isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+  
+  body('shippingAddress.street')
+    .trim()
+    .notEmpty().withMessage('Street address is required'),
+  
+  body('shippingAddress.city')
+    .trim()
+    .notEmpty().withMessage('City is required'),
+  
+  body('shippingAddress.state')
+    .trim()
+    .notEmpty().withMessage('State is required'),
+  
+  body('shippingAddress.postalCode')
+    .trim()
+    .notEmpty().withMessage('Postal code is required')
+    .matches(/^[0-9]{5,6}$/).withMessage('Please enter a valid postal code'),
+  
+  body('shippingAddress.country')
+    .trim()
+    .notEmpty().withMessage('Country is required'),
+  
+  body('paymentMethod')
+    .trim()
+    .notEmpty().withMessage('Payment method is required')
+    .isIn(['creditCard', 'paypal', 'stripe']).withMessage('Invalid payment method'),
+  
+  validateRequest
+];
+
+/**
+ * Validation rules for search operations
+ */
+export const searchValidation = [
+  query('keyword')
+    .optional()
+    .trim()
+    .isLength({ min: 2 }).withMessage('Search keyword must be at least 2 characters long'),
+  
+  query('category')
+    .optional()
+    .trim()
+    .isLength({ min: 2 }).withMessage('Category must be at least 2 characters long'),
+  
+  query('minPrice')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Minimum price must be a positive number'),
+  
+  query('maxPrice')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Maximum price must be a positive number')
+    .custom((value, { req }) => {
+      if (req.query.minPrice && parseFloat(value) < parseFloat(req.query.minPrice)) {
+        throw new Error('Maximum price must be greater than minimum price');
+      }
+      return true;
+    }),
+  
+  validateRequest
+];

@@ -1,4 +1,4 @@
-import Product from '../models/Product';
+import Product from '../models/Product.js';
 
 /**
  * @desc    Create a new product
@@ -9,14 +9,21 @@ import Product from '../models/Product';
  *   description: string,
  *   price: number,
  *   category: string,
- *   stock: number,
- *   imageUrl: string
+ *   stockQuantity: number,
+ *   images: string[]
  * }
  */
-const createProduct = async (req, res) => {
+export const createProduct = async (req, res) => {
   try {
     // Extract product details from request body
-    const { name, description, price, category, stock, imageUrl } = req.body;
+    const { 
+      name, 
+      description, 
+      price, 
+      category, 
+      stockQuantity, 
+      images 
+    } = req.body;
 
     // Create new product instance
     const product = await Product.create({
@@ -24,8 +31,8 @@ const createProduct = async (req, res) => {
       description,
       price,
       category,
-      stock,
-      imageUrl
+      stockQuantity,
+      images
     });
 
     // Return success response with created product
@@ -50,71 +57,56 @@ const createProduct = async (req, res) => {
  *   category: string,
  *   minPrice: number,
  *   maxPrice: number,
- *   sortBy: string (price, createdAt),
- *   order: string (asc, desc),
  *   page: number,
  *   limit: number
  * }
  */
-const getProducts = async (req, res) => {
+export const getProducts = async (req, res) => {
   try {
-    const {
-      keyword = '',
-      category,
-      minPrice,
-      maxPrice,
-      sortBy = 'createdAt',
-      order = 'desc',
-      page = 1,
-      limit = 10
+    const { 
+      keyword, 
+      category, 
+      minPrice, 
+      maxPrice, 
+      page = 1, 
+      limit = 10 
     } = req.query;
 
-    // Build filter object
-    const filter = {};
-    
-    // Add keyword search
+    const queryConditions = {};
+
+    // Keyword search
     if (keyword) {
-      filter.$or = [
+      queryConditions.$or = [
         { name: { $regex: keyword, $options: 'i' } },
         { description: { $regex: keyword, $options: 'i' } }
       ];
     }
 
-    // Add category filter
+    // Category filter
     if (category) {
-      filter.category = category;
+      queryConditions.category = category;
     }
 
-    // Add price range filter
+    // Price range filter
     if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+      queryConditions.price = {};
+      if (minPrice) queryConditions.price.$gte = Number(minPrice);
+      if (maxPrice) queryConditions.price.$lte = Number(maxPrice);
     }
 
-    // Calculate pagination
-    const skip = (Number(page) - 1) * Number(limit);
+    const products = await Product.find(queryConditions)
+      .limit(Number(limit))
+      .skip((page - 1) * limit)
+      .sort({ createdAt: -1 });
 
-    // Build sort object
-    const sortOptions = {};
-    sortOptions[sortBy] = order === 'desc' ? -1 : 1;
+    const totalProducts = await Product.countDocuments(queryConditions);
 
-    // Execute query with filters, sorting, and pagination
-    const products = await Product.find(filter)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(Number(limit));
-
-    // Get total count for pagination
-    const total = await Product.countDocuments(filter);
-
-    // Return paginated response
-    res.json({
+    res.status(200).json({
       success: true,
       products,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      total
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalProducts / limit),
+      totalProducts
     });
   } catch (error) {
     res.status(500).json({
@@ -130,10 +122,10 @@ const getProducts = async (req, res) => {
  * @access  Public
  * @params  id: Product ID
  */
-const getProductById = async (req, res) => {
+export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    
+
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -141,7 +133,7 @@ const getProductById = async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       product
     });
@@ -160,9 +152,30 @@ const getProductById = async (req, res) => {
  * @params  id: Product ID
  * @body    Updated product fields
  */
-const updateProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { 
+      name, 
+      description, 
+      price, 
+      category, 
+      stockQuantity, 
+      images 
+    } = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id, 
+      { 
+        name, 
+        description, 
+        price, 
+        category, 
+        stockQuantity, 
+        images,
+        updatedAt: Date.now() 
+      },
+      { new: true, runValidators: true }
+    );
 
     if (!product) {
       return res.status(404).json({
@@ -171,16 +184,12 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    // Update product with new values
-    Object.assign(product, req.body);
-    await product.save();
-
-    res.json({
+    res.status(200).json({
       success: true,
       product
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: error.message
     });
@@ -193,9 +202,9 @@ const updateProduct = async (req, res) => {
  * @access  Private/Admin
  * @params  id: Product ID
  */
-const deleteProduct = async (req, res) => {
+export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findByIdAndDelete(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -204,11 +213,9 @@ const deleteProduct = async (req, res) => {
       });
     }
 
-    await product.deleteOne();
-
-    res.json({
+    res.status(200).json({
       success: true,
-      message: 'Product removed successfully'
+      message: 'Product deleted successfully'
     });
   } catch (error) {
     res.status(500).json({
@@ -216,12 +223,4 @@ const deleteProduct = async (req, res) => {
       message: error.message
     });
   }
-};
-
-module.exports = {
-  createProduct,
-  getProducts,
-  getProductById,
-  updateProduct,
-  deleteProduct
 };

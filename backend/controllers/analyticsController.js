@@ -1,12 +1,12 @@
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const User = require('../models/User');
-const asyncHandler = require('express-async-handler');
+import Order from '../models/Order.js';
+import Product from '../models/Product.js';
+import User from '../models/User.js';
+import asyncHandler from 'express-async-handler';
 
 // @desc    Get analytics overview
 // @route   GET /api/admin/analytics
 // @access  Admin
-exports.getAnalytics = asyncHandler(async (req, res) => {
+export const getAnalytics = asyncHandler(async (req, res) => {
   // Get total revenue
   const orders = await Order.find({ status: { $ne: 'cancelled' } });
   const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
@@ -71,7 +71,7 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
 // @desc    Get top selling products
 // @route   GET /api/admin/analytics/top-products
 // @access  Admin
-exports.getTopProducts = asyncHandler(async (req, res) => {
+export const getTopProducts = asyncHandler(async (req, res) => {
   const { period = '30' } = req.query;
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - parseInt(period));
@@ -126,7 +126,7 @@ exports.getTopProducts = asyncHandler(async (req, res) => {
 // @desc    Get recent orders
 // @route   GET /api/admin/analytics/recent-orders
 // @access  Admin
-exports.getRecentOrders = asyncHandler(async (req, res) => {
+export const getRecentOrders = asyncHandler(async (req, res) => {
   const { limit = 10 } = req.query;
 
   const recentOrders = await Order.find()
